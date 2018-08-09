@@ -43,9 +43,9 @@ var (
 	addressT = reflect.TypeOf(Address{})
 )
 
+// Message represents the message passed into a contract
 type Message interface {
 	From() Address
-	//FromFrontier() (common.Address, error)
 	To() *Address
 
 	GasPrice() *big.Int
