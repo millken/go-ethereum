@@ -20,7 +20,6 @@ import (
 	"math/big"
 
 	"github.com/CoderZhi/go-ethereum/common"
-	"github.com/CoderZhi/go-ethereum/core/types"
 	"github.com/CoderZhi/go-ethereum/core/vm"
 )
 
@@ -32,19 +31,21 @@ type ChainContext interface {
 	// Engine() consensus.Engine
 
 	// GetHeader returns the hash corresponding to their hash.
-	GetHeader(common.Hash, uint64) *types.Header
+	// TODO (zhi)
+	// GetHeader(common.Hash, uint64) *types.Header
 }
 
 // NewEVMContext creates a new context for use in the EVM.
+// TODO (zhi)
+/*
 func NewEVMContext(msg common.Message, header *types.Header, chain ChainContext, author *common.Address) vm.Context {
 	// If we don't have an explicit author (i.e. not mining), extract from the header
 	var beneficiary common.Address
-	/*
-		if author == nil {
-			beneficiary, _ = chain.Engine().Author(header) // Ignore error, we're past header validation
-		} else {
-			beneficiary = *author
-		}*/
+	if author == nil {
+		beneficiary, _ = chain.Engine().Author(header) // Ignore error, we're past header validation
+	} else {
+		beneficiary = *author
+	}
 	return vm.Context{
 		CanTransfer: CanTransfer,
 		Transfer:    Transfer,
@@ -58,8 +59,11 @@ func NewEVMContext(msg common.Message, header *types.Header, chain ChainContext,
 		GasPrice:    new(big.Int).Set(msg.GasPrice()),
 	}
 }
+*/
 
 // GetHashFn returns a GetHashFunc which retrieves header hashes by number
+// TODO (zhi)
+/*
 func GetHashFn(ref *types.Header, chain ChainContext) func(n uint64) common.Hash {
 	var cache map[uint64]common.Hash
 
@@ -84,6 +88,7 @@ func GetHashFn(ref *types.Header, chain ChainContext) func(n uint64) common.Hash
 		return common.Hash{}
 	}
 }
+*/
 
 // CanTransfer checks whether there are enough funds in the address' account to make a transfer.
 // This does not take the necessary gas in to account to make the transfer valid.
