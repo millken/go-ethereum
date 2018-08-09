@@ -26,8 +26,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/crypto/sha3"
+	"github.com/CoderZhi/go-ethereum/common/hexutil"
+	"github.com/CoderZhi/go-ethereum/crypto/sha3"
 )
 
 // Lengths of hashes and addresses in bytes.
@@ -42,6 +42,20 @@ var (
 	hashT    = reflect.TypeOf(Hash{})
 	addressT = reflect.TypeOf(Address{})
 )
+
+type Message interface {
+	From() Address
+	//FromFrontier() (common.Address, error)
+	To() *Address
+
+	GasPrice() *big.Int
+	Gas() uint64
+	Value() *big.Int
+
+	Nonce() uint64
+	CheckNonce() bool
+	Data() []byte
+}
 
 // Hash represents the 32 byte Keccak256 hash of arbitrary data.
 type Hash [HashLength]byte

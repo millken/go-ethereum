@@ -21,11 +21,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/CoderZhi/go-ethereum/common"
+	"github.com/CoderZhi/go-ethereum/common/math"
+	"github.com/CoderZhi/go-ethereum/core/types"
+	"github.com/CoderZhi/go-ethereum/crypto"
+	"github.com/CoderZhi/go-ethereum/params"
 )
 
 var (
