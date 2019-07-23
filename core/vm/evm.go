@@ -474,3 +474,7 @@ func (evm *EVM) Create2(caller ContractRef, code []byte, gas uint64, endowment *
 
 // ChainConfig returns the environment's chain configuration
 func (evm *EVM) ChainConfig() *params.ChainConfig { return evm.chainConfig }
+
+func (evm *EVM) IsPreBering() bool {
+	return evm.Context.BlockNumber.Cmp(evm.chainConfig.BeringBlock) == -1
+}
