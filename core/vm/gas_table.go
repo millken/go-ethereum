@@ -229,6 +229,10 @@ func gasCreate2(evm *EVM, contract *Contract, stack *Stack, mem *Memory, memoryS
 	if err != nil {
 		return 0, err
 	}
+	if evm.IsPreBering() {
+		return gas, nil
+	}
+	
 	wordGas, overflow := bigUint64(stack.Back(2))
 	if overflow {
 		return 0, errGasUintOverflow
