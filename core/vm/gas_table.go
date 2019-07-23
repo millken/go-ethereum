@@ -257,6 +257,9 @@ func gasExtCodeCopy(gt params.GasTable, evm *EVM, contract *Contract, stack *Sta
 	if err != nil {
 		return 0, err
 	}
+	if evm.IsPreBering() {
+		return gas, nil
+	}
 
 	var overflow bool
 	if gas, overflow = math.SafeAdd(gas, gt.ExtcodeCopy); overflow {
