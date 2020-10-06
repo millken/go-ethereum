@@ -1,4 +1,4 @@
-module github.com/iotexproject/go-ethereum
+module github.com/ethereum/go-ethereum
 
 go 1.13
 
@@ -70,5 +70,3 @@ require (
 	gopkg.in/urfave/cli.v1 v1.20.0
 	gotest.tools v2.2.0+incompatible // indirect
 )
-
-replace github.com/ethereum/go-ethereum => ./
