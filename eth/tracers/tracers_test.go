@@ -175,7 +175,9 @@ func TestPrestateTracerCreate2(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to create call tracer: %v", err)
 	}
-	evm := vm.NewEVM(context, statedb, params.MainnetChainConfig, vm.Config{Debug: true, Tracer: tracer})
+	mainnetConfig := params.MainnetChainConfig
+	mainnetConfig.BeringBlock = new(big.Int).Set(context.BlockNumber)
+	evm := vm.NewEVM(context, statedb, mainnetConfig, vm.Config{Debug: true, Tracer: tracer})
 
 	msg, err := tx.AsMessage(signer)
 	if err != nil {
