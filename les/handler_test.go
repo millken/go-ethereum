@@ -49,9 +49,10 @@ func expectResponse(r p2p.MsgReader, msgcode, reqID, bv uint64, data interface{}
 // Tests that block headers can be retrieved from a remote chain based on user queries.
 func TestGetBlockHeadersLes2(t *testing.T) { testGetBlockHeaders(t, 2) }
 func TestGetBlockHeadersLes3(t *testing.T) { testGetBlockHeaders(t, 3) }
+func TestGetBlockHeadersLes4(t *testing.T) { testGetBlockHeaders(t, 4) }
 
 func testGetBlockHeaders(t *testing.T, protocol int) {
-	server, tearDown := newServerEnv(t, downloader.MaxHashFetch+15, protocol, nil, false, true, 0)
+	server, tearDown := newServerEnv(t, downloader.MaxHeaderFetch+15, protocol, nil, false, true, 0)
 	defer tearDown()
 
 	bc := server.handler.blockchain
@@ -64,27 +65,27 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 	// Create a batch of tests for various scenarios
 	limit := uint64(MaxHeaderFetch)
 	tests := []struct {
-		query  *getBlockHeadersData // The query to execute for header retrieval
+		query  *GetBlockHeadersData // The query to execute for header retrieval
 		expect []common.Hash        // The hashes of the block whose headers are expected
 	}{
 		// A single random block should be retrievable by hash and number too
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Hash: bc.GetBlockByNumber(limit / 2).Hash()}, Amount: 1},
+			&GetBlockHeadersData{Origin: hashOrNumber{Hash: bc.GetBlockByNumber(limit / 2).Hash()}, Amount: 1},
 			[]common.Hash{bc.GetBlockByNumber(limit / 2).Hash()},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Amount: 1},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Amount: 1},
 			[]common.Hash{bc.GetBlockByNumber(limit / 2).Hash()},
 		},
 		// Multiple headers should be retrievable in both directions
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Amount: 3},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Amount: 3},
 			[]common.Hash{
 				bc.GetBlockByNumber(limit / 2).Hash(),
 				bc.GetBlockByNumber(limit/2 + 1).Hash(),
 				bc.GetBlockByNumber(limit/2 + 2).Hash(),
 			},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Amount: 3, Reverse: true},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Amount: 3, Reverse: true},
 			[]common.Hash{
 				bc.GetBlockByNumber(limit / 2).Hash(),
 				bc.GetBlockByNumber(limit/2 - 1).Hash(),
@@ -93,14 +94,14 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 		},
 		// Multiple headers with skip lists should be retrievable
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Skip: 3, Amount: 3},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Skip: 3, Amount: 3},
 			[]common.Hash{
 				bc.GetBlockByNumber(limit / 2).Hash(),
 				bc.GetBlockByNumber(limit/2 + 4).Hash(),
 				bc.GetBlockByNumber(limit/2 + 8).Hash(),
 			},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Skip: 3, Amount: 3, Reverse: true},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: limit / 2}, Skip: 3, Amount: 3, Reverse: true},
 			[]common.Hash{
 				bc.GetBlockByNumber(limit / 2).Hash(),
 				bc.GetBlockByNumber(limit/2 - 4).Hash(),
@@ -109,26 +110,26 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 		},
 		// The chain endpoints should be retrievable
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Number: 0}, Amount: 1},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: 0}, Amount: 1},
 			[]common.Hash{bc.GetBlockByNumber(0).Hash()},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64()}, Amount: 1},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64()}, Amount: 1},
 			[]common.Hash{bc.CurrentBlock().Hash()},
 		},
 		// Ensure protocol limits are honored
 		//{
-		//	&getBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() - 1}, Amount: limit + 10, Reverse: true},
+		//	&GetBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() - 1}, Amount: limit + 10, Reverse: true},
 		//	[]common.Hash{},
 		//},
 		// Check that requesting more than available is handled gracefully
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() - 4}, Skip: 3, Amount: 3},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() - 4}, Skip: 3, Amount: 3},
 			[]common.Hash{
 				bc.GetBlockByNumber(bc.CurrentBlock().NumberU64() - 4).Hash(),
 				bc.GetBlockByNumber(bc.CurrentBlock().NumberU64()).Hash(),
 			},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: 4}, Skip: 3, Amount: 3, Reverse: true},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: 4}, Skip: 3, Amount: 3, Reverse: true},
 			[]common.Hash{
 				bc.GetBlockByNumber(4).Hash(),
 				bc.GetBlockByNumber(0).Hash(),
@@ -136,13 +137,13 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 		},
 		// Check that requesting more than available is handled gracefully, even if mid skip
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() - 4}, Skip: 2, Amount: 3},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() - 4}, Skip: 2, Amount: 3},
 			[]common.Hash{
 				bc.GetBlockByNumber(bc.CurrentBlock().NumberU64() - 4).Hash(),
 				bc.GetBlockByNumber(bc.CurrentBlock().NumberU64() - 1).Hash(),
 			},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: 4}, Skip: 2, Amount: 3, Reverse: true},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: 4}, Skip: 2, Amount: 3, Reverse: true},
 			[]common.Hash{
 				bc.GetBlockByNumber(4).Hash(),
 				bc.GetBlockByNumber(1).Hash(),
@@ -150,10 +151,10 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 		},
 		// Check that non existing headers aren't returned
 		{
-			&getBlockHeadersData{Origin: hashOrNumber{Hash: unknown}, Amount: 1},
+			&GetBlockHeadersData{Origin: hashOrNumber{Hash: unknown}, Amount: 1},
 			[]common.Hash{},
 		}, {
-			&getBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() + 1}, Amount: 1},
+			&GetBlockHeadersData{Origin: hashOrNumber{Number: bc.CurrentBlock().NumberU64() + 1}, Amount: 1},
 			[]common.Hash{},
 		},
 	}
@@ -168,8 +169,7 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 		// Send the hash request and verify the response
 		reqID++
 
-		cost := server.peer.peer.GetRequestCost(GetBlockHeadersMsg, int(tt.query.Amount))
-		sendRequest(server.peer.app, GetBlockHeadersMsg, reqID, cost, tt.query)
+		sendRequest(server.peer.app, GetBlockHeadersMsg, reqID, tt.query)
 		if err := expectResponse(server.peer.app, BlockHeadersMsg, reqID, testBufLimit, headers); err != nil {
 			t.Errorf("test %d: headers mismatch: %v", i, err)
 		}
@@ -179,6 +179,7 @@ func testGetBlockHeaders(t *testing.T, protocol int) {
 // Tests that block contents can be retrieved from a remote chain based on their hashes.
 func TestGetBlockBodiesLes2(t *testing.T) { testGetBlockBodies(t, 2) }
 func TestGetBlockBodiesLes3(t *testing.T) { testGetBlockBodies(t, 3) }
+func TestGetBlockBodiesLes4(t *testing.T) { testGetBlockBodies(t, 4) }
 
 func testGetBlockBodies(t *testing.T, protocol int) {
 	server, tearDown := newServerEnv(t, downloader.MaxBlockFetch+15, protocol, nil, false, true, 0)
@@ -246,8 +247,7 @@ func testGetBlockBodies(t *testing.T, protocol int) {
 		reqID++
 
 		// Send the hash request and verify the response
-		cost := server.peer.peer.GetRequestCost(GetBlockBodiesMsg, len(hashes))
-		sendRequest(server.peer.app, GetBlockBodiesMsg, reqID, cost, hashes)
+		sendRequest(server.peer.app, GetBlockBodiesMsg, reqID, hashes)
 		if err := expectResponse(server.peer.app, BlockBodiesMsg, reqID, testBufLimit, bodies); err != nil {
 			t.Errorf("test %d: bodies mismatch: %v", i, err)
 		}
@@ -257,6 +257,7 @@ func testGetBlockBodies(t *testing.T, protocol int) {
 // Tests that the contract codes can be retrieved based on account addresses.
 func TestGetCodeLes2(t *testing.T) { testGetCode(t, 2) }
 func TestGetCodeLes3(t *testing.T) { testGetCode(t, 3) }
+func TestGetCodeLes4(t *testing.T) { testGetCode(t, 4) }
 
 func testGetCode(t *testing.T, protocol int) {
 	// Assemble the test environment
@@ -278,8 +279,7 @@ func testGetCode(t *testing.T, protocol int) {
 		}
 	}
 
-	cost := server.peer.peer.GetRequestCost(GetCodeMsg, len(codereqs))
-	sendRequest(server.peer.app, GetCodeMsg, 42, cost, codereqs)
+	sendRequest(server.peer.app, GetCodeMsg, 42, codereqs)
 	if err := expectResponse(server.peer.app, CodeMsg, 42, testBufLimit, codes); err != nil {
 		t.Errorf("codes mismatch: %v", err)
 	}
@@ -288,6 +288,7 @@ func testGetCode(t *testing.T, protocol int) {
 // Tests that the stale contract codes can't be retrieved based on account addresses.
 func TestGetStaleCodeLes2(t *testing.T) { testGetStaleCode(t, 2) }
 func TestGetStaleCodeLes3(t *testing.T) { testGetStaleCode(t, 3) }
+func TestGetStaleCodeLes4(t *testing.T) { testGetStaleCode(t, 4) }
 
 func testGetStaleCode(t *testing.T, protocol int) {
 	server, tearDown := newServerEnv(t, core.TriesInMemory+4, protocol, nil, false, true, 0)
@@ -299,8 +300,7 @@ func testGetStaleCode(t *testing.T, protocol int) {
 			BHash:  bc.GetHeaderByNumber(number).Hash(),
 			AccKey: crypto.Keccak256(testContractAddr[:]),
 		}
-		cost := server.peer.peer.GetRequestCost(GetCodeMsg, 1)
-		sendRequest(server.peer.app, GetCodeMsg, 42, cost, []*CodeReq{req})
+		sendRequest(server.peer.app, GetCodeMsg, 42, []*CodeReq{req})
 		if err := expectResponse(server.peer.app, CodeMsg, 42, testBufLimit, expected); err != nil {
 			t.Errorf("codes mismatch: %v", err)
 		}
@@ -313,6 +313,7 @@ func testGetStaleCode(t *testing.T, protocol int) {
 // Tests that the transaction receipts can be retrieved based on hashes.
 func TestGetReceiptLes2(t *testing.T) { testGetReceipt(t, 2) }
 func TestGetReceiptLes3(t *testing.T) { testGetReceipt(t, 3) }
+func TestGetReceiptLes4(t *testing.T) { testGetReceipt(t, 4) }
 
 func testGetReceipt(t *testing.T, protocol int) {
 	// Assemble the test environment
@@ -331,8 +332,7 @@ func testGetReceipt(t *testing.T, protocol int) {
 		receipts = append(receipts, rawdb.ReadRawReceipts(server.db, block.Hash(), block.NumberU64()))
 	}
 	// Send the hash request and verify the response
-	cost := server.peer.peer.GetRequestCost(GetReceiptsMsg, len(hashes))
-	sendRequest(server.peer.app, GetReceiptsMsg, 42, cost, hashes)
+	sendRequest(server.peer.app, GetReceiptsMsg, 42, hashes)
 	if err := expectResponse(server.peer.app, ReceiptsMsg, 42, testBufLimit, receipts); err != nil {
 		t.Errorf("receipts mismatch: %v", err)
 	}
@@ -341,6 +341,7 @@ func testGetReceipt(t *testing.T, protocol int) {
 // Tests that trie merkle proofs can be retrieved
 func TestGetProofsLes2(t *testing.T) { testGetProofs(t, 2) }
 func TestGetProofsLes3(t *testing.T) { testGetProofs(t, 3) }
+func TestGetProofsLes4(t *testing.T) { testGetProofs(t, 4) }
 
 func testGetProofs(t *testing.T, protocol int) {
 	// Assemble the test environment
@@ -367,8 +368,7 @@ func testGetProofs(t *testing.T, protocol int) {
 		}
 	}
 	// Send the proof request and verify the response
-	cost := server.peer.peer.GetRequestCost(GetProofsV2Msg, len(proofreqs))
-	sendRequest(server.peer.app, GetProofsV2Msg, 42, cost, proofreqs)
+	sendRequest(server.peer.app, GetProofsV2Msg, 42, proofreqs)
 	if err := expectResponse(server.peer.app, ProofsV2Msg, 42, testBufLimit, proofsV2.NodeList()); err != nil {
 		t.Errorf("proofs mismatch: %v", err)
 	}
@@ -377,6 +377,7 @@ func testGetProofs(t *testing.T, protocol int) {
 // Tests that the stale contract codes can't be retrieved based on account addresses.
 func TestGetStaleProofLes2(t *testing.T) { testGetStaleProof(t, 2) }
 func TestGetStaleProofLes3(t *testing.T) { testGetStaleProof(t, 3) }
+func TestGetStaleProofLes4(t *testing.T) { testGetStaleProof(t, 4) }
 
 func testGetStaleProof(t *testing.T, protocol int) {
 	server, tearDown := newServerEnv(t, core.TriesInMemory+4, protocol, nil, false, true, 0)
@@ -392,8 +393,7 @@ func testGetStaleProof(t *testing.T, protocol int) {
 			BHash: header.Hash(),
 			Key:   account,
 		}
-		cost := server.peer.peer.GetRequestCost(GetProofsV2Msg, 1)
-		sendRequest(server.peer.app, GetProofsV2Msg, 42, cost, []*ProofReq{req})
+		sendRequest(server.peer.app, GetProofsV2Msg, 42, []*ProofReq{req})
 
 		var expected []rlp.RawValue
 		if wantOK {
@@ -414,6 +414,7 @@ func testGetStaleProof(t *testing.T, protocol int) {
 // Tests that CHT proofs can be correctly retrieved.
 func TestGetCHTProofsLes2(t *testing.T) { testGetCHTProofs(t, 2) }
 func TestGetCHTProofsLes3(t *testing.T) { testGetCHTProofs(t, 3) }
+func TestGetCHTProofsLes4(t *testing.T) { testGetCHTProofs(t, 4) }
 
 func testGetCHTProofs(t *testing.T, protocol int) {
 	config := light.TestServerIndexerConfig
@@ -450,11 +451,10 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 		Type:    htCanonical,
 		TrieIdx: 0,
 		Key:     key,
-		AuxReq:  auxHeader,
+		AuxReq:  htAuxHeader,
 	}}
 	// Send the proof request and verify the response
-	cost := server.peer.peer.GetRequestCost(GetHelperTrieProofsMsg, len(requestsV2))
-	sendRequest(server.peer.app, GetHelperTrieProofsMsg, 42, cost, requestsV2)
+	sendRequest(server.peer.app, GetHelperTrieProofsMsg, 42, requestsV2)
 	if err := expectResponse(server.peer.app, HelperTrieProofsMsg, 42, testBufLimit, proofsV2); err != nil {
 		t.Errorf("proofs mismatch: %v", err)
 	}
@@ -462,6 +462,7 @@ func testGetCHTProofs(t *testing.T, protocol int) {
 
 func TestGetBloombitsProofsLes2(t *testing.T) { testGetBloombitsProofs(t, 2) }
 func TestGetBloombitsProofsLes3(t *testing.T) { testGetBloombitsProofs(t, 3) }
+func TestGetBloombitsProofsLes4(t *testing.T) { testGetBloombitsProofs(t, 4) }
 
 // Tests that bloombits proofs can be correctly retrieved.
 func testGetBloombitsProofs(t *testing.T, protocol int) {
@@ -502,8 +503,7 @@ func testGetBloombitsProofs(t *testing.T, protocol int) {
 		trie.Prove(key, 0, &proofs.Proofs)
 
 		// Send the proof request and verify the response
-		cost := server.peer.peer.GetRequestCost(GetHelperTrieProofsMsg, len(requests))
-		sendRequest(server.peer.app, GetHelperTrieProofsMsg, 42, cost, requests)
+		sendRequest(server.peer.app, GetHelperTrieProofsMsg, 42, requests)
 		if err := expectResponse(server.peer.app, HelperTrieProofsMsg, 42, testBufLimit, proofs); err != nil {
 			t.Errorf("bit %d: proofs mismatch: %v", bit, err)
 		}
@@ -512,6 +512,7 @@ func testGetBloombitsProofs(t *testing.T, protocol int) {
 
 func TestTransactionStatusLes2(t *testing.T) { testTransactionStatus(t, 2) }
 func TestTransactionStatusLes3(t *testing.T) { testTransactionStatus(t, 3) }
+func TestTransactionStatusLes4(t *testing.T) { testTransactionStatus(t, 4) }
 
 func testTransactionStatus(t *testing.T, protocol int) {
 	server, tearDown := newServerEnv(t, 0, protocol, nil, false, true, 0)
@@ -525,11 +526,9 @@ func testTransactionStatus(t *testing.T, protocol int) {
 	test := func(tx *types.Transaction, send bool, expStatus light.TxStatus) {
 		reqID++
 		if send {
-			cost := server.peer.peer.GetRequestCost(SendTxV2Msg, 1)
-			sendRequest(server.peer.app, SendTxV2Msg, reqID, cost, types.Transactions{tx})
+			sendRequest(server.peer.app, SendTxV2Msg, reqID, types.Transactions{tx})
 		} else {
-			cost := server.peer.peer.GetRequestCost(GetTxStatusMsg, 1)
-			sendRequest(server.peer.app, GetTxStatusMsg, reqID, cost, []common.Hash{tx.Hash()})
+			sendRequest(server.peer.app, GetTxStatusMsg, reqID, []common.Hash{tx.Hash()})
 		}
 		if err := expectResponse(server.peer.app, TxStatusMsg, reqID, testBufLimit, []light.TxStatus{expStatus}); err != nil {
 			t.Errorf("transaction status mismatch")
@@ -620,7 +619,7 @@ func TestStopResumeLes3(t *testing.T) {
 	header := server.handler.blockchain.CurrentHeader()
 	req := func() {
 		reqID++
-		sendRequest(server.peer.app, GetBlockHeadersMsg, reqID, testCost, &getBlockHeadersData{Origin: hashOrNumber{Hash: header.Hash()}, Amount: 1})
+		sendRequest(server.peer.app, GetBlockHeadersMsg, reqID, &GetBlockHeadersData{Origin: hashOrNumber{Hash: header.Hash()}, Amount: 1})
 	}
 	for i := 1; i <= 5; i++ {
 		// send requests while we still have enough buffer and expect a response
